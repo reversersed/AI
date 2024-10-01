@@ -64,12 +64,12 @@ func CalcEnergy(M *TMember) {
 		for j := 0; j < 4; j++ {
 			tx = x + dx[j]
 			ty = M.Plan[x] + dy[j]
-			for tx > 0 && tx < N && ty > 0 && ty < N {
+			for tx >= 0 && tx < N && ty >= 0 && ty < N {
 				if M.Plan[tx] == ty {
 					error++
 				}
-				tx = tx + dx[j]
-				ty = ty + dy[j]
+				tx += dx[j]
+				ty += dy[j]
 			}
 		}
 	}
@@ -99,6 +99,7 @@ func main() {
 	T = Tn
 	fBest = false
 	Time = 0
+	P = 1.0
 	Best.Energy = math.MaxInt
 	Current.Plan = make([]int, N)
 	Working.Plan = make([]int, N)
@@ -116,7 +117,7 @@ func main() {
 				fNew = true
 			} else {
 				Delta = float64(Working.Energy - Current.Energy)
-				P = math.Exp(-Delta / P)
+				P = math.Exp(-Delta / T)
 				if P > rand.Float64() {
 					Accepted++
 					fNew = true
@@ -128,16 +129,16 @@ func main() {
 				if Current.Energy < Best.Energy {
 					Copy(&Best, &Current)
 					fBest = true
-				} else {
-					Copy(&Working, &Current)
 				}
+			} else {
+				Copy(&Working, &Current)
 			}
 		}
-		fmt.Printf("Temp = %.1f P = %f Energy = %d\n", T, P, Best.Energy)
+		fmt.Printf("Temp = %.1f P = %.2f Energy = %d\n", T, P, Best.Energy)
 		T = T * Alfa
 		Time++
 	}
-	if fBest {
+	if fBest && N <= 80 {
 		Show(&Best)
 	}
 }
