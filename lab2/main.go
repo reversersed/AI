@@ -42,9 +42,10 @@ var (
 		},
 	}
 	ticketRate  = 2500   // Размер штрафа энергии
-	minTemp     = 0.3    // нижний предел температуры
+	minTemp     = 0.2    // нижний предел температуры
 	startTemp   = 50.0   // стартовая температура
-	coolingRate = 0.9997 // степень остывания
+	coolingRate = 0.9999 // степень остывания
+	swapTimes   = 3      // количество перестановок за итерацию
 )
 
 func (solution *Solution) CalculateEnergy() float64 {
@@ -118,54 +119,56 @@ func RandomSolution() Solution {
 		},
 	}
 }
-func (S Solution) Swap(D Solution) Solution {
+func (D Solution) Swap(times int) Solution {
 	input := D
-	ran := rand.IntN(3)
 	addition := 0
-	if rand.IntN(2) == 0 {
-		addition = 1
-	} else {
-		addition = -1
-	}
+	for i := 0; i < times; i++ {
+		if rand.IntN(2) == 0 {
+			addition = 1
+		} else {
+			addition = -1
+		}
 
-	switch ran {
-	case 0:
-		switch rand.IntN(3) {
+		ran := rand.IntN(3)
+		switch ran {
 		case 0:
-			input.Pots.Assembling += addition
+			switch rand.IntN(3) {
+			case 0:
+				input.Pots.Assembling += addition
+			case 1:
+				input.Coffees.Assembling += addition
+			case 2:
+				input.Samovar.Assembling += addition
+			}
 		case 1:
-			input.Coffees.Assembling += addition
+			switch rand.IntN(3) {
+			case 0:
+				input.Pots.Finishing += addition
+			case 1:
+				input.Coffees.Finishing += addition
+			case 2:
+				input.Samovar.Finishing += addition
+			}
 		case 2:
-			input.Samovar.Assembling += addition
+			switch rand.IntN(3) {
+			case 0:
+				input.Pots.Stamping += addition
+			case 1:
+				input.Coffees.Stamping += addition
+			case 2:
+				input.Samovar.Stamping += addition
+			}
 		}
-	case 1:
-		switch rand.IntN(3) {
-		case 0:
-			input.Pots.Finishing += addition
-		case 1:
-			input.Coffees.Finishing += addition
-		case 2:
-			input.Samovar.Finishing += addition
-		}
-	case 2:
-		switch rand.IntN(3) {
-		case 0:
-			input.Pots.Stamping += addition
-		case 1:
-			input.Coffees.Stamping += addition
-		case 2:
-			input.Samovar.Stamping += addition
-		}
+		input.Pots.Stamping = int(math.Abs(float64(input.Pots.Stamping)))
+		input.Pots.Finishing = int(math.Abs(float64(input.Pots.Finishing)))
+		input.Pots.Assembling = int(math.Abs(float64(input.Pots.Assembling)))
+		input.Coffees.Stamping = int(math.Abs(float64(input.Coffees.Stamping)))
+		input.Coffees.Finishing = int(math.Abs(float64(input.Coffees.Finishing)))
+		input.Coffees.Assembling = int(math.Abs(float64(input.Coffees.Assembling)))
+		input.Samovar.Stamping = int(math.Abs(float64(input.Samovar.Stamping)))
+		input.Samovar.Finishing = int(math.Abs(float64(input.Samovar.Finishing)))
+		input.Samovar.Assembling = int(math.Abs(float64(input.Samovar.Assembling)))
 	}
-	input.Pots.Stamping = int(math.Abs(float64(input.Pots.Stamping)))
-	input.Pots.Finishing = int(math.Abs(float64(input.Pots.Finishing)))
-	input.Pots.Assembling = int(math.Abs(float64(input.Pots.Assembling)))
-	input.Coffees.Stamping = int(math.Abs(float64(input.Coffees.Stamping)))
-	input.Coffees.Finishing = int(math.Abs(float64(input.Coffees.Finishing)))
-	input.Coffees.Assembling = int(math.Abs(float64(input.Coffees.Assembling)))
-	input.Samovar.Stamping = int(math.Abs(float64(input.Samovar.Stamping)))
-	input.Samovar.Finishing = int(math.Abs(float64(input.Samovar.Finishing)))
-	input.Samovar.Assembling = int(math.Abs(float64(input.Samovar.Assembling)))
 	return input
 }
 func (D Solution) Valid() bool {
@@ -202,7 +205,7 @@ func (initial Solution) Simulate(minTemp, startingTemp float64, coolingRate floa
 
 	fmt.Printf("temp\tprob\t\tbest\t\tcurrent\t\tnew\n")
 	for temp > minTemp {
-		next := RandomSolution().Swap(current)
+		next := current.Swap(swapTimes)
 
 		nextEnergy := next.CalculateEnergy()
 		currentEnergy := current.CalculateEnergy()
