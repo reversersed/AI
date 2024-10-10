@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	N    = 20
+	N    = 300
 	Tn   = 30
-	Tk   = 0.5
-	Alfa = 0.98
-	ST   = 100
+	Tk   = 0.1
+	Alfa = 0.996
+	ST   = 140
 )
 
 type TMember struct {

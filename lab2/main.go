@@ -41,11 +41,11 @@ var (
 			Assembling: 25,
 		},
 	}
-	ticketRate  = 2500   // Размер штрафа энергии
-	minTemp     = 0.2    // нижний предел температуры
-	startTemp   = 50.0   // стартовая температура
-	coolingRate = 0.9999 // степень остывания
-	swapTimes   = 3      // количество перестановок за итерацию
+	ticketRate  = 2500
+	minTemp     = 0.2
+	startTemp   = 50.0
+	coolingRate = 0.9999
+	swapTimes   = 3
 )
 
 func (solution *Solution) CalculateEnergy() float64 {
@@ -170,32 +170,6 @@ func (D Solution) Swap(times int) Solution {
 		input.Samovar.Assembling = int(math.Abs(float64(input.Samovar.Assembling)))
 	}
 	return input
-}
-func (D Solution) Valid() bool {
-	if D.Pots.Assembling < 0 || D.Pots.Finishing < 0 || D.Pots.Stamping < 0 ||
-		D.Coffees.Assembling < 0 || D.Coffees.Finishing < 0 || D.Coffees.Stamping < 0 ||
-		D.Samovar.Assembling < 0 || D.Samovar.Finishing < 0 || D.Samovar.Stamping < 0 {
-		return false
-	}
-	if D.Pots.Assembling > D.Pots.Finishing {
-		return false
-	}
-	if D.Pots.Finishing > D.Pots.Stamping {
-		return false
-	}
-	if D.Coffees.Assembling > D.Coffees.Finishing {
-		return false
-	}
-	if D.Coffees.Finishing > D.Coffees.Stamping {
-		return false
-	}
-	if D.Samovar.Assembling > D.Samovar.Finishing {
-		return false
-	}
-	if D.Samovar.Finishing > D.Samovar.Stamping {
-		return false
-	}
-	return true
 }
 func (initial Solution) Simulate(minTemp, startingTemp float64, coolingRate float64) Solution {
 	current := initial
