@@ -76,6 +76,9 @@ func mutateRange(agent *TAgent) {
 	}
 	agent.vectorRange[first]--
 	agent.vectorRange[second]++
+	if agent.vectorRange[first] < 0 {
+		agent.vectorRange[first] = 0
+	}
 	calculatePrice(agent)
 }
 func calculatePrice(agent *TAgent) {
@@ -120,7 +123,6 @@ func Percept(x, y int, inputs *[Nin]int, vectorStartPoint int, offsets []TXY, ne
 			if g.mapArray[p][yoff][xoff] != 0 {
 				(*inputs)[vectorStartPoint+p]++
 			}
-			i++
 		}
 	}
 }
