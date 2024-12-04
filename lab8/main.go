@@ -2,10 +2,22 @@ package main
 
 import (
 	"fmt"
+	"image/color"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+func SendMark(message string, location TXY, mark color.Color) {
+	fmt.Printf("%d. %s\n", simulationCycle, message)
+	g.notificationMap[location.Y][location.X] = struct {
+		col   color.Color
+		spawn int64
+	}{
+		col:   mark,
+		spawn: time.Now().UTC().UnixMilli(),
+	}
+}
 func Init() {
 	for l := 0; l < 2; l++ { // очистка карты
 		for y := 0; y < N; y++ {
@@ -261,7 +273,7 @@ func Eat(agent *TAgent) {
 					}
 					// Логика уменьшения количества растений на карте
 					plants[i] = AddInEmptyCell(PLANT_PLANE)
-					fmt.Println("Была съедена трава")
+					SendMark("Была съедена трава", TXY{X: ox, Y: oy}, NGrassEated)
 					eated[0]++
 					break
 				}
@@ -277,7 +289,7 @@ func Eat(agent *TAgent) {
 						}
 						KillAgent(agent)
 						eated[1]++
-						fmt.Println("Агент был съеден более сильным агентом")
+						SendMark("Агент был съеден более сильным агентом", TXY{X: ox, Y: oy}, NAgentEated)
 					} else {
 						//agent.energy += EFmax * 2
 						agent.energy += agents[i].energy * 2
@@ -286,7 +298,7 @@ func Eat(agent *TAgent) {
 						}
 						KillAgent(&agents[i])
 						eated[1]++
-						fmt.Println("Агент съел более слабого агента")
+						SendMark("Агент съел более слабого агента", TXY{X: ox, Y: oy}, NAgentEat)
 					}
 					break
 				}
@@ -294,7 +306,7 @@ func Eat(agent *TAgent) {
 		}
 
 		if agent.energy > (Erep * EAmax) {
-			fmt.Println("Рожден новый агент")
+			SendMark("Рожден новый агент", TXY{X: ox, Y: oy}, NBirth)
 			ReproduceAgent(agent)
 		}
 	}
@@ -365,7 +377,7 @@ func Simulate(agent *TAgent) {
 	// Проверка на гибель
 	if agent.energy <= 0 || agent.price < 0 {
 		if agent.price < 0 {
-			fmt.Println("Агент родился нежизнеспособным и умер")
+			SendMark("Агент родился нежизнеспособным и умер", agent.location, NDisabled)
 		}
 		KillAgent(agent) // Гибель агента
 	} else {
@@ -427,6 +439,8 @@ func ShowStat() {
 }
 
 func main() {
+	simulationCycle = 0
+	firstStart = time.Now().UTC().UnixMilli()
 	g = &Game{}
 	GraphInit()
 	Init()
@@ -435,4 +449,6 @@ func main() {
 	ebiten.RunGame(g)
 
 	ShowStat()
+
+	fmt.Printf("\nВремя работы:\n%.2f секунд\n%d итераций\n", (float64(time.Now().UTC().UnixMilli())-float64(firstStart))/1000.0, simulationCycle)
 }

@@ -31,6 +31,12 @@ var (
 	Hp             color.Color = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 	Hs             color.Color = color.RGBA{R: 0, G: 0, B: 0, A: 255}
 
+	NGrassEated = color.RGBA{R: 0, G: 255, B: 0, A: 255}     // Зеленый
+	NAgentEat   = color.RGBA{R: 255, G: 255, B: 0, A: 255}   // Желтый
+	NAgentEated = color.RGBA{R: 255, G: 0, B: 0, A: 255}     // Красный
+	NBirth      = color.RGBA{R: 255, G: 192, B: 203, A: 255} // Розовый
+	NDisabled   = color.RGBA{R: 192, G: 192, B: 192, A: 255} // Серый
+
 	plants [Pmax]TXY
 	agents [Amax]TAgent
 
@@ -53,8 +59,10 @@ var (
 	agentMaxGen            = 0     // наибольшие поколения по типам
 	eated                  = [2]int{0, 0}
 
-	g             *Game
-	lastSleepTime int64
+	g               *Game
+	lastSleepTime   int64
+	simulationCycle       = 0
+	firstStart      int64 = 0
 
 	tableLimit = [9]int{
 		80, 50, 70,

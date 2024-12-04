@@ -50,7 +50,8 @@ const (
 	CARN_PROXIMITY  = 10 // хищник вблизи
 	PLANT_PROXIMITY = 11 // еда вблизи
 
-	latency int64 = 50
+	latency             = 50
+	notificationLatency = 1000
 )
 
 func getSRand() float64 {

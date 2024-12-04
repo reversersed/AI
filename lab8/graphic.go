@@ -10,7 +10,11 @@ import (
 )
 
 type Game struct {
-	mapArray [2][N][N]int
+	mapArray        [2][N][N]int
+	notificationMap [N][N]struct {
+		col   color.Color
+		spawn int64
+	}
 }
 
 func (g *Game) Layout(outsideWidth int, outsideHeight int) (int, int) {
@@ -45,6 +49,7 @@ func (g *Game) Update() error {
 		return nil
 	}
 	lastSleepTime = time.Now().UnixMilli()
+	simulationCycle++
 
 	for i := 0; i < Amax; i++ {
 		Simulate(&agents[i])
@@ -90,6 +95,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 			if col != nil {
 				vector.DrawFilledRect(screen, bx+float32(x)*dx, by+float32(y)*dy, dx, dy, col, true)
+			}
+			if time.Now().UTC().UnixMilli()-g.notificationMap[y][x].spawn <= notificationLatency {
+				vector.DrawFilledRect(screen, bx+float32(x)*dx, by+float32(y)*dy, dx, dy, g.notificationMap[y][x].col, true)
 			}
 		}
 	}
