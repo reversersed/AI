@@ -8,17 +8,17 @@ import (
 const (
 	N            = 30
 	screenWidth  = 900
-	screenHeight = 600
+	screenHeight = 900
 
-	Pmax = 50
+	Pmax = 35
 	Amax = 40
 
 	Nin  = 12
 	Nout = 4
 	Nw   = (Nin * Nout)
 
-	EAmax = 180
-	EFmax = 80
+	EAmax = 100
+	EFmax = 40
 	Erep  = 0.8
 
 	NORTH = 0
@@ -50,7 +50,7 @@ const (
 	CARN_PROXIMITY  = 10 // хищник вблизи
 	PLANT_PROXIMITY = 11 // еда вблизи
 
-	maxSimulationCycles = 600
+	latency int64 = 50
 )
 
 func getSRand() float64 {
@@ -60,7 +60,7 @@ func getRand(x float64) int {
 	return int(math.Round(x * getSRand()))
 }
 func getWeight() int {
-	return getRand(9)
+	return getRand(5)
 }
 func max(values []int) int {
 	max := math.MinInt32

@@ -2,6 +2,8 @@ package main
 
 import (
 	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type TXY struct {
@@ -25,21 +27,21 @@ type TAgent struct {
 
 var (
 	dx, dy, bx, by float32
-	Hh             color.Color = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	Hh             *ebiten.Image
 	Hp             color.Color = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 	Hs             color.Color = color.RGBA{R: 0, G: 0, B: 0, A: 255}
 
 	plants [Pmax]TXY
 	agents [Amax]TAgent
 
-	northFront = []TXY{{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}, {9, 9}}
-	northLeft  = []TXY{{0, -2}, {-1, -2}, {9, 9}}
-	northRight = []TXY{{0, 2}, {-1, 2}, {9, 9}}
-	northProx  = []TXY{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}, {9, 9}}
-	westFront  = []TXY{{2, -2}, {1, -2}, {0, -2}, {-1, -2}, {-2, -2}, {9, 9}}
-	westLeft   = []TXY{{2, 0}, {2, -1}, {9, 9}}
-	westRight  = []TXY{{-2, 0}, {-2, -1}, {9, 9}}
-	westProx   = []TXY{{1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {9, 9}}
+	northFront = []TXY{{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}}
+	northLeft  = []TXY{{0, -2}, {-1, -2}}
+	northRight = []TXY{{0, 2}, {-1, 2}}
+	northProx  = []TXY{{0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}}
+	westFront  = []TXY{{2, -2}, {1, -2}, {0, -2}, {-1, -2}, {-2, -2}}
+	westLeft   = []TXY{{2, 0}, {2, -1}}
+	westRight  = []TXY{{-2, 0}, {-2, -1}}
+	westProx   = []TXY{{1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}}
 
 	agentTypeCounts        = 0     // коиличество агентов
 	agentMaxAge            = 0     // возраст агентов по типам
@@ -51,10 +53,8 @@ var (
 	agentMaxGen            = 0     // наибольшие поколения по типам
 	eated                  = [2]int{0, 0}
 
-	g               *Game
-	simulationCycle = 0
-	lastSleepTime   int64
-	latency         int64 = 50
+	g             *Game
+	lastSleepTime int64
 
 	tableLimit = [9]int{
 		80, 50, 70,

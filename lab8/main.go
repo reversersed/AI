@@ -41,17 +41,6 @@ func AgentToMap(agent *TAgent) {
 	agent.direction = getRand(3)
 }
 func createRange(agent *TAgent) {
-	agent.vectorRange = [9]int{
-		getRand(float64(tableLimit[0])),
-		getRand(float64(tableLimit[1])),
-		getRand(float64(tableLimit[2])),
-		getRand(float64(tableLimit[3])),
-		getRand(float64(tableLimit[4])),
-		getRand(float64(tableLimit[5])),
-		getRand(float64(tableLimit[6])),
-		getRand(float64(tableLimit[7])),
-		getRand(float64(tableLimit[8])),
-	}
 	for i := 0; i < 9; i++ {
 		if i%3 == 0 {
 			agent.vectorRange[i] = getRand(float64(tableLimit[i/3]))
@@ -62,11 +51,16 @@ func createRange(agent *TAgent) {
 	calculatePrice(agent)
 }
 func mutateRange(agent *TAgent) {
-	agent.weights[getRand(Nw)] = getWeight()
-	first := getRand(9)
-	second := getRand(9)
+	for i := 0; i < Nw; i++ {
+		if getSRand() <= 0.5 {
+			continue
+		}
+		agent.weights[i] = getWeight()
+	}
+	first := getRand(8)
+	second := getRand(8)
 	for first == second {
-		second = getRand(9)
+		second = getRand(8)
 	}
 	agent.vectorRange[first]--
 	agent.vectorRange[second]++
@@ -74,10 +68,9 @@ func mutateRange(agent *TAgent) {
 }
 func calculatePrice(agent *TAgent) {
 	agent.price = agent.vectorRange[2]*prices[0] + agent.vectorRange[5]*prices[1] + agent.vectorRange[8]*prices[2]
-	for i := 0; i < 9; i += 3 {
-		max := int((float64(agent.vectorRange[i]) / float64(tableLimit[i])) * float64(agent.vectorRange[i]))
-		if agent.vectorRange[i+1] > max {
-			agent.price -= (agent.vectorRange[i+1] - max) * ticketValue
+	for i := 0; i < 9; i++ {
+		if agent.vectorRange[i] < 0 {
+			agent.price -= ticketValue * (-agent.vectorRange[i])
 		}
 	}
 }
@@ -85,6 +78,7 @@ func InitAgent(agent *TAgent) {
 	agent.energy = (EAmax / 2)
 	agent.age = 0
 	agent.generation = 1
+	agent.Type = 0
 	agentTypeCounts++
 	AgentToMap(agent)
 	for i := 0; i < (Nin * Nout); i++ {
@@ -107,9 +101,8 @@ func Clip(z int) int {
 
 func Percept(x, y int, inputs *[Nin]int, vectorStartPoint int, offsets []TXY, neg int) {
 	for p := HERB_PLANE; p <= PLANT_PLANE; p++ {
-		i := 0
 		(*inputs)[vectorStartPoint+p] = 0
-		for offsets[i].X != 9 {
+		for i := 0; i < len(offsets); i++ {
 			xoff := Clip(x + (offsets[i].X * neg))
 			yoff := Clip(y + (offsets[i].Y * neg))
 			if g.mapArray[p][yoff][xoff] != 0 {
@@ -157,23 +150,24 @@ func Move(agent *TAgent) {
 	if agent.Type == DEAD {
 		return
 	}
-	offsets := [4]TXY{{-1, 0}, {1, 0}, {0, 1}, {0, -1}}
-	g.mapArray[HERBIVORE][agent.location.Y][agent.location.X]--
+	offsets := [4]TXY{{0, -1}, {0, 1}, {1, 0}, {-1, 0}}
+	g.mapArray[HERB_PLANE][agent.location.Y][agent.location.X]--
 	agent.location.X = Clip(agent.location.X + offsets[agent.direction].X)
 	agent.location.Y = Clip(agent.location.Y + offsets[agent.direction].Y)
-	g.mapArray[HERBIVORE][agent.location.Y][agent.location.X]++
+	g.mapArray[HERB_PLANE][agent.location.Y][agent.location.X]++
 }
 func KillAgent(agent *TAgent) {
 	if agent.Type == DEAD {
 		return
 	}
 	agentDeaths++
-	g.mapArray[HERBIVORE][agent.location.Y][agent.location.X]--
+	g.mapArray[HERB_PLANE][agent.location.Y][agent.location.X]--
 	agentTypeCounts--
 	if bestAgent == nil || agent.price > bestAgent.price {
 		bestAgent = agent
 	}
 	if agentTypeCounts < (Amax / 2) {
+		agentBirths++
 		InitAgent(agent) // инициализация агента
 	} else { // конец агента
 		agent.location.X = -1
@@ -185,7 +179,7 @@ func ReproduceAgent(agent *TAgent) {
 	var child *TAgent
 	i := 0
 
-	if agentTypeCounts < (Amax / 2) {
+	if agentTypeCounts < Amax {
 		for i < Amax {
 			if agents[i].Type == DEAD {
 				break
@@ -204,10 +198,12 @@ func ReproduceAgent(agent *TAgent) {
 			if agentMaxGen < child.generation {
 				agentMaxGen = child.generation
 			}
+			child.Type = 0
 			child.energy = (EAmax / 2) // энергия
-			agent.energy = (EAmax / 2)
+			agent.energy = EFmax / 2
 			agentTypeCounts++
 			agentTypeReproductions++
+			agents[i] = *child
 		}
 	}
 }
@@ -215,14 +211,13 @@ func ReproduceAgent(agent *TAgent) {
 func ChooseObject(agent *TAgent, ax, ay int, offsets []TXY, neg int, ox, oy *int) int {
 	xoff := 0
 	yoff := 0
-	i := 0
 
-	for offsets[i].X != 9 {
+	for i := 0; i < len(offsets); i++ {
 		xoff = Clip(ax + (offsets[i].X * neg))
 		yoff = Clip(ay + (offsets[i].Y * neg))
 		if g.mapArray[HERB_PLANE][yoff][xoff] != 0 {
 			for _, a := range agents {
-				if a.location.X == xoff && a.location.Y == yoff && a.Type != DEAD && a.price <= agent.price {
+				if a.location.X == xoff && a.location.Y == yoff && a.Type != DEAD {
 					*ox = xoff
 					*oy = yoff
 					return HERB_PLANE
@@ -234,9 +229,8 @@ func ChooseObject(agent *TAgent, ax, ay int, offsets []TXY, neg int, ox, oy *int
 			*oy = yoff
 			return PLANT_PLANE
 		}
-		i++
 	}
-	return 0
+	return -1
 }
 func Eat(agent *TAgent) {
 	var ox, oy int
@@ -257,7 +251,7 @@ func Eat(agent *TAgent) {
 		ret = ChooseObject(agent, ax, ay, westProx, -1, &ox, &oy)
 	}
 
-	if ret != 0 {
+	if ret != -1 {
 		if ret == PLANT_PLANE {
 			for i := 0; i < Pmax; i++ {
 				if plants[i].X == ox && plants[i].Y == oy {
@@ -275,26 +269,41 @@ func Eat(agent *TAgent) {
 		} else if ret == HERB_PLANE {
 			for i := 0; i < Amax; i++ {
 				if agents[i].location.X == ox && agents[i].location.Y == oy {
-					agent.energy += EFmax * 2
-					if agent.energy > EAmax {
-						agent.energy = EAmax
+					if agents[i].price > agent.price || (agent.price == agents[i].price && getSRand() < 0.5) {
+						//agent.energy += EFmax * 2
+						agents[i].energy += agent.energy * 2
+						if agents[i].energy > EAmax {
+							agents[i].energy = EAmax
+						}
+						KillAgent(agent)
+						eated[1]++
+						fmt.Println("Агент был съеден более сильным агентом")
+					} else {
+						//agent.energy += EFmax * 2
+						agent.energy += agents[i].energy * 2
+						if agent.energy > EAmax {
+							agent.energy = EAmax
+						}
+						KillAgent(&agents[i])
+						eated[1]++
+						fmt.Println("Агент съел более слабого агента")
 					}
-					KillAgent(&agents[i])
-					eated[1]++
-					fmt.Println("Был съеден агент")
 					break
 				}
 			}
 		}
 
 		if agent.energy > (Erep * EAmax) {
+			fmt.Println("Рожден новый агент")
 			ReproduceAgent(agent)
-			agentBirths++
 		}
 	}
 }
 
 func Simulate(agent *TAgent) {
+	if agent.Type == DEAD {
+		return
+	}
 	x := agent.location.X
 	y := agent.location.Y
 
@@ -354,7 +363,10 @@ func Simulate(agent *TAgent) {
 	agent.energy -= 1
 
 	// Проверка на гибель
-	if agent.energy <= 0 || (bestAgent != nil && agent.price < bestAgent.price/10) {
+	if agent.energy <= 0 || agent.price < 0 {
+		if agent.price < 0 {
+			fmt.Println("Агент родился нежизнеспособным и умер")
+		}
 		KillAgent(agent) // Гибель агента
 	} else {
 		agent.age++
@@ -367,7 +379,7 @@ func Simulate(agent *TAgent) {
 }
 
 func ShowStat() {
-	fmt.Println("Результаты:")
+	fmt.Println("\nРезультаты:")
 	fmt.Printf("Агентов всего                   - %d\n", agentTypeCounts)
 	fmt.Printf("Возраст агентов                 - %d\n", agentMaxAge)
 	fmt.Printf("Рождений агентов                - %d\n", agentBirths)
