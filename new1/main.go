@@ -71,10 +71,10 @@ func Obraz(H int) int {
 		}
 	case 1: // рисование =
 		for i := -rr; i <= rr; i++ {
-			L := Lc - rr/2
+			L := Lc - rr/3
 			C := Cc + i
 			R[L][C] = 1
-			L = Lc + rr/2
+			L = Lc + rr/3
 			R[L][C] = 1
 		}
 	}
