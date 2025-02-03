@@ -64,9 +64,9 @@ func Obraz(H int) int {
 			R[L][C] = 1
 
 			L = Lc + i
-			C = Cc - rr/2
+			C = Cc - rr/2 - i/3
 			R[L][C] = 1
-			C = Cc + rr/2
+			C = Cc + rr/2 - i/3
 			R[L][C] = 1
 		}
 	case 1: // рисование =
