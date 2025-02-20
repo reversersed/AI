@@ -6,25 +6,26 @@ import (
 )
 
 const (
-	N      = 20
-	Teta   = 3
-	DeltaW = 0.05
+	N      = 20   // размерность клеток
+	Teta   = 3    // порог
+	DeltaW = 0.05 // вес обучения
 )
 
-type LC struct {
-	L int
-	C int
+type LC struct { // координаты
+	L int // строка
+	C int // столбец
 }
 
 var (
-	R     [N][N]int
-	A     [N][N]int
-	S     [N][N][N]LC
-	W     [N][N][4]float64
-	fTest = false
+	R     [N][N]int        // слой рецепторов
+	A     [N][N]int        // ассоциативный слой
+	S     [N][N][N]LC      // связи
+	W     [N][N][2]float64 // веса связей
+	fTest = false          // флаг проверки работоспособности
 )
 
 func InitLayers() {
+	// генерация связей
 	for L := 0; L < N; L++ {
 		for C := 0; C < N; C++ {
 			for K := 0; K < N; K++ {
@@ -33,7 +34,8 @@ func InitLayers() {
 			}
 		}
 	}
-	for K := 0; K < 4; K++ {
+	// очистка весов
+	for K := 0; K < 2; K++ {
 		for L := 0; L < N; L++ {
 			for C := 0; C < N; C++ {
 				W[L][C][K] = 0
@@ -44,13 +46,13 @@ func InitLayers() {
 
 func NameDic(dic string) string {
 	switch dic {
-	case "1000":
+	case "00":
 		return "И"
-	case "0100":
+	case "01":
 		return "К"
-	case "0010":
+	case "10":
 		return "Л"
-	case "0001":
+	case "11":
 		return "Н"
 	default:
 		return "не знаю"
@@ -58,23 +60,28 @@ func NameDic(dic string) string {
 }
 
 func Obraz(H int) string {
+	// чистка рецепторов
 	for L := 0; L < N; L++ {
 		for C := 0; C < N; C++ {
 			R[L][C] = 0
 		}
 	}
-	sd := H % 4
-	rr := rand.Intn(N / 3)
+
+	sd := H % 4            // выбор образа: 0-И,1-К,2-Л,3-Н
+	rr := rand.Intn(N / 3) // выбор радиуса образа
 	if rr < 5 {
 		rr = 5
 	}
-	res := "0000"
-	Lc := rr + rand.Intn(N-2*rr)
-	Cc := rr + rand.Intn(N-2*rr)
+	res := "00" // код образа
 
+	// выбор места расположения образа
+	Lc := rr + rand.Intn(N-2*rr) // строка центра
+	Cc := rr + rand.Intn(N-2*rr) // столбец центра
+
+	// рисование выбранного образа
 	switch sd {
 	case 0: // И
-		res = "1000"
+		res = "00"
 		for i := Lc - rr; i < Lc+rr; i++ {
 			R[i][Cc-rr] = 1
 			R[i][Cc+rr] = 1
@@ -86,7 +93,7 @@ func Obraz(H int) string {
 			L--
 		}
 	case 1: // К
-		res = "0100"
+		res = "01"
 		for i := Lc - rr; i < Lc+rr; i++ {
 			R[i][Cc-rr] = 1
 		}
@@ -97,7 +104,7 @@ func Obraz(H int) string {
 			}
 		}
 	case 2: // Л
-		res = "0010"
+		res = "10"
 		for i := Lc - rr; i < Lc+rr; i++ {
 			R[i][Cc+rr] = 1
 		}
@@ -107,7 +114,7 @@ func Obraz(H int) string {
 			L--
 		}
 	case 3: // Н
-		res = "0001"
+		res = "11"
 		for i := Lc - rr; i < Lc+rr; i++ {
 			R[i][Cc-rr] = 1
 			R[i][Cc+rr] = 1
@@ -117,6 +124,7 @@ func Obraz(H int) string {
 		}
 	}
 
+	// вывод образа на экран во время проверки работоспособности
 	if fTest {
 		fmt.Printf("Рисую %s\n", NameDic(res))
 		for L := 0; L < N; L++ {
@@ -130,26 +138,32 @@ func Obraz(H int) string {
 			fmt.Println()
 		}
 	}
+
 	return res
 }
 
 func Otobr() {
+	// очистка ассоциативного слоя A
 	for L := 0; L < N; L++ {
 		for C := 0; C < N; C++ {
 			A[L][C] = 0
 		}
 	}
+	// отображение в слое A (входы)
 	for L := 0; L < N; L++ {
 		for C := 0; C < N; C++ {
 			if R[L][C] == 1 {
 				for K := 0; K < N; K++ {
 					Lv := S[L][C][K].L
 					Cv := S[L][C][K].C
-					A[Lv][Cv]++
+					if Lv >= 0 && Lv < N && Cv >= 0 && Cv < N {
+						A[Lv][Cv]++
+					}
 				}
 			}
 		}
 	}
+	// отображение в слое A (выходы)
 	for L := 0; L < N; L++ {
 		for C := 0; C < N; C++ {
 			if A[L][C] > Teta {
@@ -162,9 +176,9 @@ func Otobr() {
 }
 
 func Reak() string {
-	E := make([]float64, 4)
-	res := ""
-	for K := 0; K < 4; K++ {
+	var E [2]float64 // эффекторный слой
+	res := ""        // код распознавания
+	for K := 0; K < 2; K++ {
 		E[K] = 0
 		for L := 0; L < N; L++ {
 			for C := 0; C < N; C++ {
@@ -177,6 +191,7 @@ func Reak() string {
 			res += "0"
 		}
 	}
+	// вывод результата при проверке работоспособности
 	if fTest {
 		fmt.Printf("\nЯ думаю что это %s\n", NameDic(res))
 	}
@@ -184,11 +199,11 @@ func Reak() string {
 }
 
 func Teach(sd, sd1 string) {
-	for K := 0; K < 4; K++ {
+	for K := 0; K < 2; K++ {
 		if sd[K] != sd1[K] {
 			for L := 0; L < N; L++ {
 				for C := 0; C < N; C++ {
-					if A[L][C] == 1 {
+					if A[L][C] == 1 { // обучение виноватых
 						if sd[K] == '0' {
 							W[L][C][K] -= DeltaW
 						} else {
@@ -202,23 +217,24 @@ func Teach(sd, sd1 string) {
 }
 
 func main() {
-	fmt.Println("Обучение перцептрона распознаванию четырех образов")
+	fmt.Println("Обучение перцептрона распознаванию четырех образов: крестика, нолика, плюса, ромба")
 
-	limit := 96.68
-	nOk := 0
+	limit := 97.68 // предел обучения
+	nOk := 0       // число удачных ответов
 	percent := 0.0
 	Step := 1
 
-	InitLayers()
+	InitLayers() // инициализация слоёв
 	for percent < limit {
-		dic := Obraz(Step)
-		Otobr()
-		dic1 := Reak()
+		dic := Obraz(Step) // новый образ
+		Otobr()            // отображение
+		dic1 := Reak()     // опознавание
 		if dic == dic1 {
 			nOk++
 		} else {
 			Teach(dic, dic1)
 		}
+		// вывод текущей информации на экран
 		percent = float64(nOk) / float64(Step) * 100
 		fmt.Printf("Шаг %d : Доля удачных ответов %.2f %%\n", Step, percent)
 		Step++
@@ -226,9 +242,9 @@ func main() {
 	fTest = true
 
 	for i := 0; i < 20; i++ {
-		dic := Obraz(Step)
-		Otobr()
-		dic1 := Reak()
+		dic := Obraz(Step) // новый образ
+		Otobr()            // отображение
+		dic1 := Reak()     // опознавание
 		if dic == dic1 {
 			nOk++
 		} else {
