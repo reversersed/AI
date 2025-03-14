@@ -13,20 +13,22 @@ import (
 )
 
 const (
-	N            = 50
-	TAU          = 0.05
-	TAU_STEP     = 0.002
-	D_H          = 0.02
-	ALPHA        = 0.005
-	R            = 4
-	A0           = 9
-	A1           = 37.2
-	A2           = 30.4
-	A3           = 5.2
-	A4           = -234.6
-	A5           = 76
-	screenWidth  = 800
-	screenHeight = 600
+	N              = 50
+	TAU            = 0.05
+	TAU_STEP       = 0.006
+	D_H            = 0.01
+	ALPHA          = 0.005
+	START_INTERVAL = -10.0
+	END_INTERVAL   = 0.0
+	R              = 8
+	A0             = 9
+	A1             = 37.2
+	A2             = 30.4
+	A3             = 5.2
+	A4             = -234.6
+	A5             = 76
+	screenWidth    = 800
+	screenHeight   = 600
 )
 
 type Vars struct {
@@ -85,14 +87,19 @@ func newStep() {
 		vars.u_n[i] = f(vars.c_x + float64(i)*TAU)
 	}
 	vars.c_x += TAU_STEP
+	if vars.c_x > END_INTERVAL {
+		vars.c_x = START_INTERVAL
+	}
 
 	// Прогноз положения F
-	for i := 0; i < R; i++ {
-		vars.u_t[i] = vars.u_n[i] // Используем реальные значения для первых R элементов
-	}
 	for i := R; i < N; i++ {
 		for r := 0; r < R; r++ {
 			vars.u_t[i] = vars.g[r] * vars.u[i-1-r]
+		}
+	}
+	for i := 0; i < R; i++ {
+		for r := 0; r < R; r++ {
+			vars.u_t[i] = vars.g[r] * vars.u[i+1+r]
 		}
 	}
 
@@ -191,6 +198,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		fmt.Fprintf(buf, "G[%d]   %.3f\n", i, vars.g[i])
 		textY += 16
 	}
+	fmt.Fprintf(buf, "x      %.3f\n", vars.c_x)
+	fmt.Fprintf(buf, "y      %.3f\n", f(vars.c_x))
+
+	funcDiff := 0.0
+	for i := 0; i < N; i++ {
+		funcDiff += math.Abs(vars.u[i] - vars.u_t[i])
+	}
+	fmt.Fprintf(buf, "diff   %.3f\n", funcDiff)
 
 	text.Draw(screen, buf.String(), font, int(graph.rx)-220, textY, color.RGBA{255, 0, 0, 255})
 }
@@ -207,7 +222,7 @@ func main() {
 	graph.rx = graph.bx + float64(N-1)*graph.dx
 
 	vars = new(Vars)
-	vars.c_x = 0.0
+	vars.c_x = START_INTERVAL
 	for i := 0; i < N; i++ {
 		vars.u[i] = 0.0
 		vars.u_t[i] = 0.0
