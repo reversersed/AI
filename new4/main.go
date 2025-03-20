@@ -99,7 +99,7 @@ func newStep() {
 	}
 	for i := 0; i < R; i++ {
 		for r := 0; r < R; r++ {
-			vars.u_t[i] = vars.g[r] * vars.u[i+1+r]
+			vars.u_t[i] = vars.u[i]
 		}
 	}
 
