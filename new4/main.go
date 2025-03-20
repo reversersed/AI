@@ -17,10 +17,10 @@ const (
 	TAU            = 0.05
 	TAU_STEP       = 0.006
 	D_H            = 0.01
-	ALPHA          = 0.005
-	START_INTERVAL = -10.0
-	END_INTERVAL   = 0.0
-	R              = 8
+	ALPHA          = 0.002
+	START_INTERVAL = -2.0
+	END_INTERVAL   = 8.0
+	R              = 15
 	A0             = 9
 	A1             = 37.2
 	A2             = 30.4
@@ -107,6 +107,10 @@ func newStep() {
 	d_u := vars.u_n[vars.n_t] - vars.u_t[vars.n_t]
 	if d_u < -D_H || d_u > D_H {
 		teach(vars.u, &vars.g, vars.n_t, &vars.err, d_u)
+	}
+	vars.n_t++
+	if vars.n_t >= N-1 {
+		vars.n_t = R
 	}
 	vars.step++
 }
@@ -196,7 +200,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for i := 0; i < R; i++ {
 		fmt.Fprintf(buf, "G[%d]   %.3f\n", i, vars.g[i])
-		textY += 16
 	}
 	fmt.Fprintf(buf, "x      %.3f\n", vars.c_x)
 	fmt.Fprintf(buf, "y      %.3f\n", f(vars.c_x))
