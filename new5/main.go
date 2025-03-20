@@ -8,31 +8,31 @@ import (
 )
 
 const (
-	N                       = 27       // Размерность
-	border                  = 10       // Минимальный размер боковой стороны буквы
-	lmax                    = 10000000 // число шагов обучения
-	nOkInProgressiterations = 100000   // Количество итераций для подсчета точности
-	INPUT_NEURONS           = N        // входных нейронов
-	HIDDEN_NEURONS_AMMOUNT  = 4        // скрытых нейронов
-	OUTPUT_NEURONS          = 2        // выходных нейронов
+	N                       = 27
+	border                  = 10
+	lmax                    = 10000000
+	nOkInProgressiterations = 100000
+	INPUT_NEURONS           = N
+	HIDDEN_NEURONS_AMMOUNT  = 4
+	OUTPUT_NEURONS          = 2
 	FIGURE_AMMOUNT          = 4
-	LEARN_RATE              = 0.2 // коэффициент обучения
+	LEARN_RATE              = 0.2
 )
 
 var (
-	inputs [INPUT_NEURONS][INPUT_NEURONS]float64 // входной слой
-	hidden [HIDDEN_NEURONS_AMMOUNT]float64       // скрытый слой
-	actual [OUTPUT_NEURONS]float64               // выходной слой
-	target [OUTPUT_NEURONS]float64               // правильные выходы
+	inputs [INPUT_NEURONS][INPUT_NEURONS]float64
+	hidden [HIDDEN_NEURONS_AMMOUNT]float64
+	actual [OUTPUT_NEURONS]float64
+	target [OUTPUT_NEURONS]float64
 
 	wih [INPUT_NEURONS][INPUT_NEURONS][HIDDEN_NEURONS_AMMOUNT]float64
 	who [HIDDEN_NEURONS_AMMOUNT][OUTPUT_NEURONS]float64
 
-	moveh, moveo float64                         // Смещения слоев
-	erro         [OUTPUT_NEURONS]float64         // ошибки выходного слоя
-	errh         [HIDDEN_NEURONS_AMMOUNT]float64 // ошибки скрытого слоя
+	moveh, moveo float64
+	erro         [OUTPUT_NEURONS]float64
+	errh         [HIDDEN_NEURONS_AMMOUNT]float64
 
-	fTest = false // флаг проверки работоспособности
+	fTest = false
 	rng   = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
@@ -63,7 +63,7 @@ func assignRandomWeights() {
 }
 
 func feedForward() {
-	for hid1 := 0; hid1 < HIDDEN_NEURONS_AMMOUNT; hid1++ {
+	for hid1 := range HIDDEN_NEURONS_AMMOUNT {
 		sum := 0.0
 		for inp1 := range INPUT_NEURONS {
 			for inp2 := range INPUT_NEURONS {
@@ -210,7 +210,7 @@ func obraz(H int) string {
 	if fTest {
 		fmt.Printf("Рисую %s\n", nameDic(res))
 		for L := range N {
-			for C := 0; C < N; C++ {
+			for C := range N {
 				if inputs[L][C] == 0 {
 					fmt.Print("_")
 				} else {
@@ -237,8 +237,6 @@ func setTarget(drawnFigure int) {
 }
 
 func main() {
-	fmt.Println("Обучение перцептрона распознаванию четырех образов: И К Л Н")
-
 	nOk := 0
 	nOkInProgress := 0
 
@@ -263,5 +261,4 @@ func main() {
 			fTest = true
 		}
 	}
-	fmt.Println("Конец")
 }
