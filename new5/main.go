@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"os/signal"
 	"time"
 )
 
 const (
 	N                       = 27
 	border                  = 10
-	lmax                    = 10000000
 	nOkInProgressiterations = 100000
 	INPUT_NEURONS           = N
 	HIDDEN_NEURONS_AMMOUNT  = 4
@@ -34,6 +35,10 @@ var (
 
 	fTest = false
 	rng   = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	nOk           = 0
+	nOkInProgress = 0
+	Step          = 1
 )
 
 func sigmoidFunction(val float64) float64 {
@@ -237,11 +242,12 @@ func setTarget(drawnFigure int) {
 }
 
 func main() {
-	nOk := 0
-	nOkInProgress := 0
+	isStopped := false
 
 	assignRandomWeights()
-	for Step := 1; Step <= lmax; Step++ {
+	ch := make(chan os.Signal, 1)
+	go Interrupt(ch, &isStopped)
+	for ; !isStopped; Step++ {
 		dic := obraz(Step)
 		setTarget(Step % FIGURE_AMMOUNT)
 		feedForward()
@@ -257,8 +263,25 @@ func main() {
 				Step, float64(nOk)/float64(Step)*100, nOkInProgressiterations, float64(nOkInProgress)/float64(nOkInProgressiterations)*100)
 			nOkInProgress = 0
 		}
-		if Step == (lmax - 20) {
-			fTest = true
-		}
 	}
+	<-ch
+}
+
+func Interrupt(ch chan os.Signal, isStopped *bool) {
+	signal.Notify(ch, os.Interrupt)
+
+	<-ch
+	*isStopped = true
+	fTest = true
+	st := Step + 20
+	for ; Step <= st; Step++ {
+		obraz(Step)
+		setTarget(Step % FIGURE_AMMOUNT)
+		feedForward()
+		chooseOption()
+		fmt.Printf("\n\nШаг %d:\n\tДоля удачных ответов\t\t%.2f%%\n",
+			Step, float64(nOk)/float64(Step)*100)
+	}
+	fmt.Print("\n*** Программа завершила работу ***")
+	os.Exit(0)
 }
